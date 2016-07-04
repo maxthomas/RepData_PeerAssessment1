@@ -1,16 +1,12 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 
 The data will be processed using `dplyr` and `data.table`, along with `lubridate` and `ggplot2` for graphics.
 
-```{r imports-preproc, message=FALSE, warning=FALSE}
+
+```r
 library(data.table)
 library(dplyr)
 library(lubridate)
@@ -27,17 +23,24 @@ dpd <- tbl_df(data)
 
 For the time being, remove `NA` values.
 
-```{r no-nil}
+
+```r
 noNil <- filter(dpd, !is.na(steps))
 ```
 
 Calculate the sum of all steps in the data set.
-```{r sum-all-steps}
+
+```r
 sum(noNil$steps)
 ```
 
+```
+## [1] 570608
+```
+
 Next, group the data after applying `lubridate` to get date objects. Sum the steps after grouping.
-```{r grouped-summed}
+
+```r
 grped <- noNil %>%
   mutate(dto = ymd(date)) %>%
   group_by(dto)
@@ -46,7 +49,8 @@ summed <- summarize(grped, sum(steps))
 
 Create a histogram with the sum of steps by day and their counts in the data set.
 
-```{r plot-1-historgram-steps}
+
+```r
 ggplot(data = summed, 
                aes(summed$`sum(steps)`)) +
   geom_histogram(bins = 25) + 
@@ -55,16 +59,31 @@ ggplot(data = summed,
        title = "Sum of steps taken per day")
 ```
 
+![](PA1_template_files/figure-html/plot-1-historgram-steps-1.png)<!-- -->
+
 Calculate the mean and median sum of steps per day.
-```{r mean-median-sum-steps}
+
+```r
 mean(summed$`sum(steps)`)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(summed$`sum(steps)`)
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
 
 Calculate the mean number of steps per interval.
-```{r mean-steps-interval}
+
+```r
 meanSteps <- noNil %>% 
   group_by(interval) %>% 
   summarize(mean(steps))
@@ -72,7 +91,8 @@ meanSteps <- noNil %>%
 
 Graph the above.
 
-```{r graph-interval-mean-steps}
+
+```r
 ggplot(meanSteps, 
                 aes(x = interval,
                     y = `mean(steps)`)) +
@@ -82,23 +102,44 @@ ggplot(meanSteps,
   geom_line()
 ```
 
+![](PA1_template_files/figure-html/graph-interval-mean-steps-1.png)<!-- -->
+
 Find the interval with the maximum mean steps across all days.
 
-```{r max-interval-mean-steps}
+
+```r
 filter(meanSteps, 
        `mean(steps)` == max(`mean(steps)`))
+```
+
+```
+## Source: local data frame [1 x 2]
+## 
+##   interval mean(steps)
+##      <int>       <dbl>
+## 1      835    206.1698
 ```
 
 ## Imputing missing values
 
 Show number of rows with `NA` steps. 
-```{r}
+
+```r
 count(filter(dpd, is.na(steps)))
+```
+
+```
+## Source: local data frame [1 x 1]
+## 
+##       n
+##   <int>
+## 1  2304
 ```
 
 To impute the missing values, we will use the average steps per interval across all days to fill in the `NA` values from the original data set. Then, ungroup the data and add the `lubridate` date to the data.
 
-```{r create-non-nils}
+
+```r
 nonNils <- dpd %>% 
   group_by(interval) %>% 
   mutate(steps = ifelse(is.na(steps), 
@@ -109,14 +150,16 @@ nonNils <- dpd %>%
 
 Group the data by the `lubridate` date, then sum the data.
 
-```{r non-nils-summed}
+
+```r
 nonNilsSummed <- nonNils %>%
   group_by(dto) %>%
   summarize(sum(steps))
 ```
 
 Create a histogram with the new data set, without `NA` values.
-```{r non-nil-data-histogram}
+
+```r
 ggplot(data = nonNilsSummed, 
                      aes(`sum(steps)`)) +
   geom_histogram(bins = 25) + 
@@ -125,10 +168,24 @@ ggplot(data = nonNilsSummed,
        title = "Sum of steps taken per day, imputed missing data")
 ```
 
+![](PA1_template_files/figure-html/non-nil-data-histogram-1.png)<!-- -->
+
 Calculate mean and median of the non-`NA` data.
-```{r mean-median-non-nils}
+
+```r
 mean(nonNilsSummed$`sum(steps)`)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(nonNilsSummed$`sum(steps)`)
+```
+
+```
+## [1] 10766.19
 ```
 
 The mean increased slightly with non-`NA` data, while the median remained the same.
@@ -138,14 +195,16 @@ While the shape of the two data sets is appears approximately the same, many mor
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Create a function that will label weekend  days appropriately.
-```{r weekday-fx}
+
+```r
 isWeekendDay <- function(x) {
   x == "Sunday" | x == "Saturday"
 }
 ```
 
 Add the `weekendLabel` factor using the function above, then group the data by `interval` and `weekdayLabel` for processing.
-```{r weekend-labeled}
+
+```r
 nonNilsWithWeekendLabel <- nonNils %>%
   mutate(weekendLabel = factor(ifelse(isWeekendDay(weekdays(dto)), 
                                       "weekend", 
@@ -156,7 +215,8 @@ nonNilsWithWeekendLabel <- nonNils %>%
 
 Plot weekend activity alongside weekday activity.
 
-```{r}
+
+```r
 ggplot(nonNilsWithWeekendLabel, 
                       aes(x=interval,
                           y=`mean(steps)`,
@@ -168,3 +228,5 @@ ggplot(nonNilsWithWeekendLabel,
   facet_wrap(~ weekendLabel, ncol = 1) + 
   geom_line()
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
