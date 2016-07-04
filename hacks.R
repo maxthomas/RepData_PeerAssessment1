@@ -77,6 +77,5 @@ weekendPlot <- ggplot(nonNilsWithWeekendLabel,
                           col = weekendLabel)) +
   labs(x="Interval",
        y="Steps") +
-  facet_wrap(interval ~ weekendLabel, nrow = 2) +
   theme(legend.position = "top") +
   geom_line()
